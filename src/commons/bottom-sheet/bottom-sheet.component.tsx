@@ -1,17 +1,22 @@
 import Animated, {
   Easing,
   interpolateColor,
+  useAnimatedGestureHandler,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import {
+  GestureEvent,
+  PanGestureHandler,
+  PanGestureHandlerEventPayload,
+} from 'react-native-gesture-handler';
+import {
   LayoutChangeEvent,
   SafeAreaView,
   StyleSheet,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
   useWindowDimensions,
 } from 'react-native';
@@ -92,6 +97,30 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
       dismiss: dismissMe,
     }));
 
+    const gestureHandler = useAnimatedGestureHandler<
+      GestureEvent<PanGestureHandlerEventPayload>,
+      Record<string, number>
+    >({
+      onStart: (_, context) => {
+        context.topVal = top.value;
+      },
+      onActive: (event, context) => {
+        const moveVal = context.topVal + event.translationY;
+        if (moveVal < 0) {
+          return;
+        }
+        top.value = moveVal;
+      },
+      onEnd: () => {
+        // dismiss sheet of movement is more than 30% of content height
+        if (top.value > 0.3 * contentHeight.current) {
+          dismissMe();
+        } else {
+          openMe();
+        }
+      },
+    });
+
     return (
       <>
         <Animated.View
@@ -108,9 +137,12 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
         <Animated.View
           style={[styles.container, animatedStyle]}
           onLayout={handleLayout}>
-          <View style={styles.pinContainer}>
-            <View style={styles.pin} />
-          </View>
+          <PanGestureHandler onGestureEvent={gestureHandler}>
+            <Animated.View style={styles.pinContainer}>
+              <View style={styles.pin} />
+            </Animated.View>
+          </PanGestureHandler>
+
           <SafeAreaView style={styles.innerContainer}>
             {options.map((option, optionIndex) => (
               <BottomSheetOption
