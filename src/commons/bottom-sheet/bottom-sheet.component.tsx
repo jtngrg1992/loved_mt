@@ -10,10 +10,12 @@ import {
   LayoutChangeEvent,
   SafeAreaView,
   StyleSheet,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
   useWindowDimensions,
 } from 'react-native';
-import React, {useCallback, useImperativeHandle, useRef} from 'react';
+import React, {useCallback, useImperativeHandle, useRef, useState} from 'react';
 
 import {BottomSheetOption} from './bottom-sheet-option.component';
 import {BottomSheetProps} from '.';
@@ -31,6 +33,8 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
 
     const top = useSharedValue(windowHeight);
     const underlayColorIndex = useSharedValue(0);
+
+    const [pointerEvents, setPointerEvents] = useState<'none' | 'auto'>('none');
 
     const animatedStyle = useAnimatedStyle(() => {
       return {
@@ -74,11 +78,13 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
     const openMe = useCallback(() => {
       top.value = 0;
       setUnderlayColorIndex(1);
+      setPointerEvents('auto');
     }, [setUnderlayColorIndex]);
 
     const dismissMe = useCallback(() => {
       top.value = contentHeight.current;
       setUnderlayColorIndex(0);
+      setPointerEvents('none');
     }, [setUnderlayColorIndex]);
 
     useImperativeHandle(ref, () => ({
@@ -87,9 +93,18 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
     }));
 
     return (
-      <Animated.View
-        style={[styles.underlay, animatedUnderlayColor]}
-        pointerEvents="none">
+      <>
+        <Animated.View
+          style={[styles.underlay, animatedUnderlayColor]}
+          pointerEvents={pointerEvents}>
+          <TouchableOpacity
+            style={{flex: 1}}
+            onPress={() => {
+              dismissMe();
+            }}
+          />
+        </Animated.View>
+
         <Animated.View
           style={[styles.container, animatedStyle]}
           onLayout={handleLayout}>
@@ -107,14 +122,13 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
             ))}
           </SafeAreaView>
         </Animated.View>
-      </Animated.View>
+      </>
     );
   },
 );
 
 const styles = StyleSheet.create({
   underlay: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
     position: 'absolute',
     top: 0,
     left: 0,

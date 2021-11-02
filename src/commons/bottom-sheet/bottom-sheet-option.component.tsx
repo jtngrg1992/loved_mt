@@ -1,4 +1,4 @@
-import {Image, StyleSheet, Text, View} from 'react-native';
+import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import React, {useMemo} from 'react';
 
 import {BottomSheetOptionProps} from './types';
@@ -14,7 +14,7 @@ export const BottomSheetOption = ({
   }, [isFirst, isLast]);
 
   return (
-    <View
+    <TouchableOpacity
       style={[
         styles.container,
         {
@@ -30,7 +30,7 @@ export const BottomSheetOption = ({
           <Text style={styles.subtitle}>{option.subtitle}</Text>
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
