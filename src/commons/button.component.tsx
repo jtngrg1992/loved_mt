@@ -5,6 +5,7 @@ import {
   TouchableOpacityProps,
 } from 'react-native';
 
+import {Font} from '../utils';
 import React from 'react';
 
 export type ButtonProps = {
@@ -14,7 +15,7 @@ export type ButtonProps = {
 export const Button = ({title, style, ...otherProps}: ButtonProps) => {
   return (
     <TouchableOpacity {...otherProps} style={[styles.container, style]}>
-      <Text>{title}</Text>
+      <Text style={styles.titleStyle}>{title}</Text>
     </TouchableOpacity>
   );
 };
@@ -26,5 +27,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'tomato',
     borderRadius: 4,
   },
-  titleStyle: {},
+  titleStyle: {
+    fontFamily: Font.medium,
+    color: 'white',
+  },
 });
