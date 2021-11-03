@@ -1,6 +1,7 @@
 import Animated, {
   Easing,
   interpolateColor,
+  runOnJS,
   useAnimatedGestureHandler,
   useAnimatedStyle,
   useSharedValue,
@@ -83,13 +84,13 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
     const openMe = useCallback(() => {
       top.value = 0;
       setUnderlayColorIndex(1);
-      setPointerEvents('auto');
+      runOnJS(setPointerEvents)('auto');
     }, [setUnderlayColorIndex]);
 
     const dismissMe = useCallback(() => {
       top.value = contentHeight.current;
       setUnderlayColorIndex(0);
-      setPointerEvents('none');
+      runOnJS(setPointerEvents)('none');
     }, [setUnderlayColorIndex]);
 
     useImperativeHandle(ref, () => ({
@@ -111,12 +112,11 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
         }
         top.value = moveVal;
       },
-      onEnd: () => {
-        // dismiss sheet of movement is more than 30% of content height
+      onEnd() {
         if (top.value > 0.3 * contentHeight.current) {
-          dismissMe();
+          runOnJS(dismissMe)();
         } else {
-          openMe();
+          runOnJS(openMe)();
         }
       },
     });
@@ -134,26 +134,26 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
           />
         </Animated.View>
 
-        <Animated.View
-          style={[styles.container, animatedStyle]}
-          onLayout={handleLayout}>
-          <PanGestureHandler onGestureEvent={gestureHandler}>
-            <Animated.View style={styles.pinContainer}>
+        <PanGestureHandler onGestureEvent={gestureHandler}>
+          <Animated.View
+            style={[styles.container, animatedStyle]}
+            onLayout={handleLayout}>
+            <View style={styles.pinContainer}>
               <View style={styles.pin} />
-            </Animated.View>
-          </PanGestureHandler>
+            </View>
 
-          <SafeAreaView style={styles.innerContainer}>
-            {options.map((option, optionIndex) => (
-              <BottomSheetOption
-                key={optionIndex}
-                option={option}
-                isFirst={optionIndex === 0}
-                isLast={optionIndex === options.length - 1}
-              />
-            ))}
-          </SafeAreaView>
-        </Animated.View>
+            <SafeAreaView style={styles.innerContainer}>
+              {options.map((option, optionIndex) => (
+                <BottomSheetOption
+                  key={optionIndex}
+                  option={option}
+                  isFirst={optionIndex === 0}
+                  isLast={optionIndex === options.length - 1}
+                />
+              ))}
+            </SafeAreaView>
+          </Animated.View>
+        </PanGestureHandler>
       </>
     );
   },
