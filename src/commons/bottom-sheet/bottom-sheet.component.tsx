@@ -26,9 +26,11 @@ import React, {useCallback, useImperativeHandle, useRef, useState} from 'react';
 import {BottomSheetOption} from './bottom-sheet-option.component';
 import {BottomSheetProps} from '.';
 import {BottomSheetRef} from './types';
+import {Colors} from '../../utils';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-const HIDDEN_UNDERLAY_COLOR = 'rgba(0,0,0,0)';
-const DEFAULT_UNDERLAY_COLOR = 'rgba(0,0,0,0.5)';
+const HIDDEN_UNDERLAY_COLOR = Colors.TRANSPARENT;
+const DEFAULT_UNDERLAY_COLOR = Colors.TRANSLUCENT_BLACK;
 
 const UNDERLAY_COLORS = [HIDDEN_UNDERLAY_COLOR, DEFAULT_UNDERLAY_COLOR];
 
@@ -38,6 +40,7 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
     const windowHeight = useWindowDimensions().height;
 
     const top = useSharedValue(windowHeight);
+    const bottom = useSafeAreaInsets().bottom;
     const underlayColorIndex = useSharedValue(0);
 
     const [pointerEvents, setPointerEvents] = useState<'none' | 'auto'>('none');
@@ -142,17 +145,19 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
               <View style={styles.pin} />
             </View>
 
-            <SafeAreaView style={styles.innerContainer}>
-              {options.map((option, optionIndex) => (
-                <BottomSheetOption
-                  onPress={() => onSelectOption(option)}
-                  key={optionIndex}
-                  option={option}
-                  isFirst={optionIndex === 0}
-                  isLast={optionIndex === options.length - 1}
-                />
-              ))}
-            </SafeAreaView>
+            <View style={styles.innerContainer}>
+              <View style={{marginBottom: bottom, backgroundColor: 'white'}}>
+                {options.map((option, optionIndex) => (
+                  <BottomSheetOption
+                    onPress={() => onSelectOption(option)}
+                    key={optionIndex}
+                    option={option}
+                    isFirst={optionIndex === 0}
+                    isLast={optionIndex === options.length - 1}
+                  />
+                ))}
+              </View>
+            </View>
           </Animated.View>
         </PanGestureHandler>
       </>
@@ -179,14 +184,14 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     overflow: 'hidden',
-    backgroundColor: 'white',
+    backgroundColor: Colors.GREY,
   },
   pinContainer: {
     alignItems: 'center',
-    paddingBottom: 4,
+    paddingBottom: 6,
   },
   pin: {
-    backgroundColor: 'rgb(245,245,245)',
+    backgroundColor: Colors.GREY,
     width: 80,
     height: 8,
     borderRadius: 4,
