@@ -33,7 +33,7 @@ const DEFAULT_UNDERLAY_COLOR = 'rgba(0,0,0,0.5)';
 const UNDERLAY_COLORS = [HIDDEN_UNDERLAY_COLOR, DEFAULT_UNDERLAY_COLOR];
 
 export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
-  ({options}, ref) => {
+  ({options, onSelectOption}, ref) => {
     const contentHeight = useRef<number>(0);
     const windowHeight = useWindowDimensions().height;
 
@@ -145,6 +145,7 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
             <SafeAreaView style={styles.innerContainer}>
               {options.map((option, optionIndex) => (
                 <BottomSheetOption
+                  onPress={() => onSelectOption(option)}
                   key={optionIndex}
                   option={option}
                   isFirst={optionIndex === 0}

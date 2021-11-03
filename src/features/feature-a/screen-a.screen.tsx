@@ -1,4 +1,9 @@
-import {BottomSheet, BottomSheetRef, Button} from '../../commons';
+import {
+  BottomSheet,
+  BottomSheetOption,
+  BottomSheetRef,
+  Button,
+} from '../../commons';
 import React, {useCallback, useRef} from 'react';
 import {SafeAreaView, StyleSheet} from 'react-native';
 
@@ -11,6 +16,10 @@ export default () => {
     _bottomSheet.current?.open();
   }, []);
 
+  const handleOptionSelection = useCallback((option: BottomSheetOption) => {
+    _bottomSheet.current?.dismiss();
+  }, []);
+
   return (
     <>
       <SafeAreaView style={styles.container}>
@@ -20,7 +29,11 @@ export default () => {
           onPress={handleOpenSheet}
         />
       </SafeAreaView>
-      <BottomSheet ref={_bottomSheet} options={dummyBottomSheetOptions} />
+      <BottomSheet
+        ref={_bottomSheet}
+        options={dummyBottomSheetOptions}
+        onSelectOption={handleOptionSelection}
+      />
     </>
   );
 };

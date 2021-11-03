@@ -1,4 +1,4 @@
-import {ImageSourcePropType, ViewProps} from 'react-native';
+import {ImageSourcePropType, TouchableOpacityProps} from 'react-native';
 
 export type BottomSheetOption = {
   icon: ImageSourcePropType;
@@ -13,10 +13,11 @@ export type BottomSheetRef = {
 
 export type BottomSheetProps = {
   options: BottomSheetOption[];
+  onSelectOption: (option: BottomSheetOption) => void;
 };
 
 export type BottomSheetOptionProps = {
   option: BottomSheetOption;
   isFirst: boolean;
   isLast: boolean;
-} & ViewProps;
+} & TouchableOpacityProps;

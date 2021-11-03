@@ -8,6 +8,7 @@ export const BottomSheetOption = ({
   option,
   isFirst,
   isLast,
+  ...otherProps
 }: BottomSheetOptionProps) => {
   const showGap = useMemo(() => {
     return !isLast;
@@ -20,7 +21,8 @@ export const BottomSheetOption = ({
         {
           marginBottom: showGap ? 1 : 0,
         },
-      ]}>
+      ]}
+      {...otherProps}>
       <View style={styles.imageContainer}>
         <Image source={option.icon} style={styles.icon} resizeMode="contain" />
       </View>
