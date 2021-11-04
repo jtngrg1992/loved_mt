@@ -15,7 +15,6 @@ import {
 } from 'react-native-gesture-handler';
 import {
   LayoutChangeEvent,
-  SafeAreaView,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -31,18 +30,28 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const HIDDEN_UNDERLAY_COLOR = Colors.TRANSPARENT;
 const DEFAULT_UNDERLAY_COLOR = Colors.TRANSLUCENT_BLACK;
+const UDERLAY_SOLID_COLOR = Colors.GREY;
 
-const UNDERLAY_COLORS = [HIDDEN_UNDERLAY_COLOR, DEFAULT_UNDERLAY_COLOR];
+const EDGE_RADIUS = 20;
+
+const UNDERLAY_COLORS = [
+  HIDDEN_UNDERLAY_COLOR,
+  DEFAULT_UNDERLAY_COLOR,
+  UDERLAY_SOLID_COLOR,
+];
 
 export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
   ({options, onSelectOption}, ref) => {
-    const contentHeight = useRef<number>(0);
     const windowHeight = useWindowDimensions().height;
+    const spacerHeight = useRef<number>(0);
+    const pinContainerHeight = useRef<number>(0);
 
     const top = useSharedValue(windowHeight);
-    const bottom = useSafeAreaInsets().bottom;
+    const pinContainerOpacity = useSharedValue(1);
     const underlayColorIndex = useSharedValue(0);
+    const roundedEdges = useSharedValue(EDGE_RADIUS);
 
+    const bottom = useSafeAreaInsets().bottom;
     const [pointerEvents, setPointerEvents] = useState<'none' | 'auto'>('none');
 
     const animatedStyle = useAnimatedStyle(() => {
@@ -65,16 +74,31 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
       return {
         backgroundColor: interpolateColor(
           underlayColorIndex.value,
-          [0, 1],
+          [0, 1, 2],
           UNDERLAY_COLORS,
         ),
       };
     });
 
-    const handleLayout = useCallback((event: LayoutChangeEvent) => {
-      const componentHeight = event.nativeEvent.layout.height;
-      top.value = componentHeight;
-      contentHeight.current = top.value;
+    const animatedRoundedEdges = useAnimatedStyle(() => {
+      return {
+        borderTopLeftRadius: withTiming(roundedEdges.value, {duration: 200}),
+        borderTopRightRadius: withTiming(roundedEdges.value, {duration: 200}),
+      };
+    });
+
+    const pinContainerAnimatedStyle = useAnimatedStyle(() => {
+      return {
+        opacity: withTiming(pinContainerOpacity.value, {duration: 400}),
+      };
+    });
+
+    const handleSpacerLayout = useCallback((event: LayoutChangeEvent) => {
+      spacerHeight.current = event.nativeEvent.layout.height;
+    }, []);
+
+    const handlePinContainerLayout = useCallback((event: LayoutChangeEvent) => {
+      pinContainerHeight.current = event.nativeEvent.layout.height;
     }, []);
 
     const setUnderlayColorIndex = useCallback((i: number) => {
@@ -85,16 +109,23 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
     }, []);
 
     const openMe = useCallback(() => {
-      top.value = 0;
+      top.value = spacerHeight.current;
+      pinContainerOpacity.value = 1;
       setUnderlayColorIndex(1);
-      runOnJS(setPointerEvents)('auto');
+      setPointerEvents('auto');
     }, [setUnderlayColorIndex]);
 
     const dismissMe = useCallback(() => {
-      top.value = contentHeight.current;
+      top.value = windowHeight;
       setUnderlayColorIndex(0);
-      runOnJS(setPointerEvents)('none');
+      setPointerEvents('none');
     }, [setUnderlayColorIndex]);
+
+    const snapMeFull = useCallback(() => {
+      top.value = -pinContainerHeight.current;
+      pinContainerOpacity.value = 0;
+      setUnderlayColorIndex(2);
+    }, []);
 
     useImperativeHandle(ref, () => ({
       open: openMe,
@@ -110,14 +141,16 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
       },
       onActive: (event, context) => {
         const moveVal = context.topVal + event.translationY;
-        if (moveVal < 0) {
-          return;
-        }
         top.value = moveVal;
+
+        const p = (windowHeight - top.value) / windowHeight;
+        roundedEdges.value = (1 - p) * EDGE_RADIUS;
       },
       onEnd() {
-        if (top.value > 0.3 * contentHeight.current) {
+        if (top.value > 0.7 * windowHeight) {
           runOnJS(dismissMe)();
+        } else if (top.value <= 0.2 * windowHeight) {
+          runOnJS(snapMeFull)();
         } else {
           runOnJS(openMe)();
         }
@@ -125,10 +158,8 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
     });
 
     return (
-      <>
-        <Animated.View
-          style={[styles.underlay, animatedUnderlayColor]}
-          pointerEvents={pointerEvents}>
+      <View style={styles.absoluteFill} pointerEvents={pointerEvents}>
+        <Animated.View style={[styles.absoluteFill, animatedUnderlayColor]}>
           <TouchableOpacity
             style={{flex: 1}}
             onPress={() => {
@@ -137,15 +168,17 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
           />
         </Animated.View>
 
+        <View style={[styles.absoluteFill]}></View>
         <PanGestureHandler onGestureEvent={gestureHandler}>
-          <Animated.View
-            style={[styles.container, animatedStyle]}
-            onLayout={handleLayout}>
-            <View style={styles.pinContainer}>
+          <Animated.View style={[{flex: 1}, animatedStyle]}>
+            <Animated.View
+              onLayout={handlePinContainerLayout}
+              style={[styles.pinContainer, pinContainerAnimatedStyle]}>
               <View style={styles.pin} />
-            </View>
+            </Animated.View>
 
-            <View style={styles.innerContainer}>
+            <Animated.View
+              style={[styles.innerContainer, animatedRoundedEdges]}>
               <View style={{marginBottom: bottom, backgroundColor: 'white'}}>
                 {options.map((option, optionIndex) => (
                   <BottomSheetOption
@@ -157,16 +190,17 @@ export const BottomSheet = React.forwardRef<BottomSheetRef, BottomSheetProps>(
                   />
                 ))}
               </View>
-            </View>
+            </Animated.View>
+            <View style={styles.spacer} onLayout={handleSpacerLayout} />
           </Animated.View>
         </PanGestureHandler>
-      </>
+      </View>
     );
   },
 );
 
 const styles = StyleSheet.create({
-  underlay: {
+  absoluteFill: {
     position: 'absolute',
     top: 0,
     left: 0,
@@ -180,9 +214,6 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   innerContainer: {
-    flex: 1,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
     overflow: 'hidden',
     backgroundColor: Colors.GREY,
   },
@@ -196,4 +227,5 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
   },
+  spacer: {backgroundColor: Colors.GREY, flex: 1},
 });
